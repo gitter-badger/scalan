@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
+import scalan.{ViewsDslExp, ScalanExp, ScalanSeq, Scalan}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -59,7 +59,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
+trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)

@@ -14,7 +14,7 @@ trait Scalan
   with Elems
   with Containers
   with TypeWrappers
-  with Views
+  with ViewsDsl
   with Entities
   with Proxy
   with Tuples
@@ -56,7 +56,7 @@ trait ScalanSeq
   with ElemsSeq
   with ContainersSeq
   with TypeWrappersSeq
-  with ViewsSeq
+  with ViewsDslSeq
   with ProxySeq
   with TuplesSeq
   with LoopsSeq
@@ -94,7 +94,7 @@ trait ScalanExp
   with ElemsExp
   with ContainersExp
   with TypeWrappersExp
-  with ViewsExp
+  with ViewsDslExp
   with ProxyExp
   with TuplesExp
   with LoopsExp

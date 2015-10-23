@@ -20,7 +20,7 @@ trait ArrayViews extends ArrayOps with Views { self: Scalan =>
 //  def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A]
 }
 
-trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsSeq { self: ScalanSeq =>
+trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsDslSeq { self: ScalanSeq =>
 
 //  case class SeqViewArray[A, B](arr: Option[PA[A]], iso: Iso[A,B])
 //    extends ViewArray[A,B] with SeqPArray[B]
@@ -63,7 +63,7 @@ trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsSeq { self: Sc
 
 }
 
-trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseExp { self: ScalanExp =>
+trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with BaseExp { self: ScalanExp =>
   
   case class ViewArray[A, B](source: Arr[A])(iso: Iso1[A, B, Array])
     extends View1[A, B, Array](iso) {

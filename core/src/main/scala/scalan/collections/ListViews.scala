@@ -11,10 +11,10 @@ import scalan.staged.BaseExp
 trait ListViews extends ListOps with Views { self: Scalan =>
 }
 
-trait ListViewsSeq extends ListViews with ListOpsSeq with ViewsSeq { self: ScalanSeq =>
+trait ListViewsSeq extends ListViews with ListOpsSeq with ViewsDslSeq { self: ScalanSeq =>
 }
 
-trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp { self: ScalanExp =>
+trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseExp { self: ScalanExp =>
 
   case class ViewList[A, B](source: Lst[A])(iso: Iso1[A, B, List]) extends View1[A, B, List](iso) {
     //lazy val iso = listIso(innerIso)

@@ -103,7 +103,7 @@ trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>
   }
 }
 
-trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
+trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   case class ViewArrayBuffer[A, B](source: Rep[ArrayBuffer[A]])(iso: Iso1[A, B, ArrayBuffer])
     extends View1[A, B, ArrayBuffer](iso) {
     //lazy val iso = arrayBufferIso(innerIso)
