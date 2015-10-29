@@ -88,14 +88,19 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DenseVectorIso[T](implicit eT: Elem[T])
-    extends Iso[DenseVectorData[T], DenseVector[T]] {
+    extends Iso0[DenseVectorData[T], DenseVector[T]] {
     override def from(p: Rep[DenseVector[T]]) =
       p.items
     override def to(p: Rep[Collection[T]]) = {
       val items = p
       DenseVector(items)
     }
-    lazy val eTo = new DenseVectorElem[T](this)
+    lazy val eFrom = element[Collection[T]]
+    lazy val eTo = new DenseVectorElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[DenseVectorData[T], DenseVector[T], DenseVectorIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[DenseVectorData[T], DenseVector[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class DenseVectorCompanionAbs extends CompanionDef[DenseVectorCompanionAbs] with DenseVectorCompanion {
@@ -127,7 +132,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseVector[T](implicit eT: Elem[T]): Iso[DenseVectorData[T], DenseVector[T]] =
-    cachedIso[DenseVectorIso[T]](eT)
+    reifyObject(new DenseVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDenseVector[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]]
@@ -161,14 +166,19 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ConstVectorIso[T](implicit eT: Elem[T])
-    extends Iso[ConstVectorData[T], ConstVector[T]]()(pairElement(implicitly[Elem[T]], implicitly[Elem[Int]])) {
+    extends Iso0[ConstVectorData[T], ConstVector[T]] {
     override def from(p: Rep[ConstVector[T]]) =
       (p.item, p.length)
     override def to(p: Rep[(T, Int)]) = {
       val Pair(item, length) = p
       ConstVector(item, length)
     }
-    lazy val eTo = new ConstVectorElem[T](this)
+    lazy val eFrom = pairElement(element[T], element[Int])
+    lazy val eTo = new ConstVectorElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[ConstVectorData[T], ConstVector[T], ConstVectorIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ConstVectorData[T], ConstVector[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class ConstVectorCompanionAbs extends CompanionDef[ConstVectorCompanionAbs] with ConstVectorCompanion {
@@ -201,7 +211,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstVector[T](implicit eT: Elem[T]): Iso[ConstVectorData[T], ConstVector[T]] =
-    cachedIso[ConstVectorIso[T]](eT)
+    reifyObject(new ConstVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkConstVector[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]]
@@ -234,14 +244,19 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SparseVectorIso[T](implicit eT: Elem[T])
-    extends Iso[SparseVectorData[T], SparseVector[T]]()(pairElement(implicitly[Elem[Collection[Int]]], pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]]))) {
+    extends Iso0[SparseVectorData[T], SparseVector[T]] {
     override def from(p: Rep[SparseVector[T]]) =
       (p.nonZeroIndices, p.nonZeroValues, p.length)
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
-    lazy val eTo = new SparseVectorElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[Int]], pairElement(element[Collection[T]], element[Int]))
+    lazy val eTo = new SparseVectorElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[SparseVectorData[T], SparseVector[T], SparseVectorIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SparseVectorData[T], SparseVector[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class SparseVectorCompanionAbs extends CompanionDef[SparseVectorCompanionAbs] with SparseVectorCompanion {
@@ -274,7 +289,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector[T](implicit eT: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]] =
-    cachedIso[SparseVectorIso[T]](eT)
+    reifyObject(new SparseVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]]
@@ -307,14 +322,19 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SparseVector1Iso[T](implicit eT: Elem[T])
-    extends Iso[SparseVector1Data[T], SparseVector1[T]]()(pairElement(implicitly[Elem[Collection[(Int, T)]]], implicitly[Elem[Int]])) {
+    extends Iso0[SparseVector1Data[T], SparseVector1[T]] {
     override def from(p: Rep[SparseVector1[T]]) =
       (p.nonZeroItems, p.length)
     override def to(p: Rep[(Collection[(Int, T)], Int)]) = {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)
     }
-    lazy val eTo = new SparseVector1Elem[T](this)
+    lazy val eFrom = pairElement(element[Collection[(Int, T)]], element[Int])
+    lazy val eTo = new SparseVector1Elem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[SparseVector1Data[T], SparseVector1[T], SparseVector1Iso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SparseVector1Data[T], SparseVector1[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class SparseVector1CompanionAbs extends CompanionDef[SparseVector1CompanionAbs] with SparseVector1Companion {
@@ -347,7 +367,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector1[T](implicit eT: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
-    cachedIso[SparseVector1Iso[T]](eT)
+    reifyObject(new SparseVector1Iso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]

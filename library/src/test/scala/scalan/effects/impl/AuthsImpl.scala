@@ -88,14 +88,19 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 3) Iso for concrete class
   class LoginIso
-    extends Iso[LoginData, Login]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends Iso0[LoginData, Login] {
     override def from(p: Rep[Login]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       Login(user, password)
     }
-    lazy val eTo = new LoginElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new LoginElem(self)
+    lazy val selfType = new ConcreteIso0Elem[LoginData, Login, LoginIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[LoginData, Login]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
@@ -128,7 +133,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoLogin: Iso[LoginData, Login] =
-    cachedIso[LoginIso]()
+    reifyObject(new LoginIso())
 
   // 6) smart constructor and deconstructor
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
@@ -161,14 +166,19 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HasPermissionIso
-    extends Iso[HasPermissionData, HasPermission]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends Iso0[HasPermissionData, HasPermission] {
     override def from(p: Rep[HasPermission]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       HasPermission(user, password)
     }
-    lazy val eTo = new HasPermissionElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new HasPermissionElem(self)
+    lazy val selfType = new ConcreteIso0Elem[HasPermissionData, HasPermission, HasPermissionIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[HasPermissionData, HasPermission]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {
@@ -201,7 +211,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHasPermission: Iso[HasPermissionData, HasPermission] =
-    cachedIso[HasPermissionIso]()
+    reifyObject(new HasPermissionIso())
 
   // 6) smart constructor and deconstructor
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]

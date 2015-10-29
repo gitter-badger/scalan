@@ -91,14 +91,19 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjEdgeData[V, E], AdjEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends Iso0[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override def from(p: Rep[AdjEdge[V, E]]) =
       (p.fromId, p.outIndex, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val eTo = new AdjEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new AdjEdgeElem[V, E](self)
+    lazy val selfType = new ConcreteIso0Elem[AdjEdgeData[V, E], AdjEdge[V, E], AdjEdgeIso[V, E]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[AdjEdgeData[V, E], AdjEdge[V, E]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
   }
   // 4) constructor and deconstructor
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
@@ -131,7 +136,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjEdgeData[V, E], AdjEdge[V, E]] =
-    cachedIso[AdjEdgeIso[V, E]](eV, eE)
+    reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
@@ -165,14 +170,19 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncEdgeData[V, E], IncEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends Iso0[IncEdgeData[V, E], IncEdge[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
       (p.fromId, p.toId, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val eTo = new IncEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new IncEdgeElem[V, E](self)
+    lazy val selfType = new ConcreteIso0Elem[IncEdgeData[V, E], IncEdge[V, E], IncEdgeIso[V, E]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[IncEdgeData[V, E], IncEdge[V, E]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
   }
   // 4) constructor and deconstructor
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
@@ -205,7 +215,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncEdgeData[V, E], IncEdge[V, E]] =
-    cachedIso[IncEdgeIso[V, E]](eV, eE)
+    reifyObject(new IncEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]

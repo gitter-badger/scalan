@@ -40,10 +40,16 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
 
-  case class SSeqIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SSeq](iso) {
-    def from(x: Rep[SSeq[B]]) = x.map(iso.fromFun)
-    def to(x: Rep[SSeq[A]]) = x.map(iso.toFun)
+  case class SSeqIso[A, B](innerIso: Iso[A, B]) extends Iso10[A, B, SSeq] {
+    lazy val selfType = new ConcreteIso0Elem[SSeq[A], SSeq[B], SSeqIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SSeq[A], SSeq[B]]]]
+    def cC = container[SSeq]
+    def from(x: Rep[SSeq[B]]) = x.map(innerIso.fromFun)
+    def to(x: Rep[SSeq[A]]) = x.map(innerIso.toFun)
   }
+
+  def sSeqIso[A, B](innerIso: Iso[A, B]) =
+    reifyObject(SSeqIso[A, B](innerIso)).asInstanceOf[Iso1[A, B, SSeq]]
 
   // familyElem
   class SSeqElem[A, To <: SSeq[A]](implicit _eA: Elem[A])
@@ -178,14 +184,19 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SSeqImplIso[A](implicit eA: Elem[A])
-    extends Iso[SSeqImplData[A], SSeqImpl[A]] {
+    extends Iso0[SSeqImplData[A], SSeqImpl[A]] {
     override def from(p: Rep[SSeqImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[Seq[A]]) = {
       val wrappedValue = p
       SSeqImpl(wrappedValue)
     }
-    lazy val eTo = new SSeqImplElem[A](this)
+    lazy val eFrom = element[Seq[A]]
+    lazy val eTo = new SSeqImplElem[A](self)
+    lazy val selfType = new ConcreteIso0Elem[SSeqImplData[A], SSeqImpl[A], SSeqImplIso[A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SSeqImplData[A], SSeqImpl[A]]]]
+    def productArity = 1
+    def productElement(n: Int) = eA
   }
   // 4) constructor and deconstructor
   class SSeqImplCompanionAbs extends CompanionDef[SSeqImplCompanionAbs] {
@@ -217,7 +228,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSSeqImpl[A](implicit eA: Elem[A]): Iso[SSeqImplData[A], SSeqImpl[A]] =
-    cachedIso[SSeqImplIso[A]](eA)
+    reifyObject(new SSeqImplIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
@@ -315,8 +326,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
         List(list.asInstanceOf[AnyRef], element[A]))
   }
 
-  case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
-    extends View1[A, B, SSeq](iso) {
+  case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso[A, B])
+    extends View1[A, B, SSeq](sSeqIso(iso)) {
     override def toString = s"ViewSSeq[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -554,7 +565,7 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
-      ViewSSeq(arr)(SSeqIso(compIso))
+      ViewSSeq(arr)(compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -576,11 +587,11 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
           val tmp = f1(x)
           iso.from(tmp)
         })
-        val res = ViewSSeq(s)(SSeqIso(iso))
+        val res = ViewSSeq(s)(iso)
         res
       case (HasViews(source, contIso: SSeqIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
-        val iso = contIso.iso
+        val iso = contIso.innerIso
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
         implicit val eC = f1.elem.eRange

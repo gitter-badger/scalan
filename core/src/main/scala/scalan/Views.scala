@@ -22,6 +22,7 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
       case i: Iso0[_, _] => (this eq i) || (eFrom == i.eFrom && eTo == i.eTo)
       case _ => false
     }
+    override def canEqual(other: Any) = other.isInstanceOf[Iso0[_, _]]
     override lazy val hashCode = 41 * eFrom.hashCode + eTo.hashCode
     def isIdentity: Boolean = false
     lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo), eFrom)
@@ -123,45 +124,39 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
     override def isIdentity = false
   }
 
-  abstract class Iso10[A, B, C[_]](val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], cC: Cont[C])
+  type Iso1[A, B, C[_]] = Rep[Iso10[A, B, C]]
+
+  trait Iso10[A, B, C[_]]
     extends Iso0[C[A], C[B]]/*()(cC.lift(innerIso.eFrom))*/ {
-//    implicit val eA = innerIso.eFrom
-//    implicit val eB = innerIso.eTo
+    def innerIso: Iso[A, B]
+    implicit def cC: Container[C]
+    implicit def eA: Elem[A] = innerIso.eFrom
+    implicit def eB: Elem[B] = innerIso.eTo
     lazy val eFrom: Elem[C[A]] = cC.lift(innerIso.eFrom)
     lazy val eTo: Elem[C[B]] = cC.lift(innerIso.eTo)
     override def isIdentity = innerIso.isIdentity
   }
 
+  // TODO currently need implicit args for ArrayIsoElem to be generated, should be removed
+  abstract class ArrayIso[A,B](innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso10[A, B, Array] {
+    def cC = container[Array]
+    def from(x: Arr[B]) = x.mapBy(innerIso.fromFun)
+    def to(x: Arr[A]) = x.mapBy(innerIso.toFun)
+  }
+  
 }
 
 trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
 
-  private val isoCache = MutMap.empty[(Class[_], Seq[AnyRef]), AnyRef]
-
-  def cachedIso[I <: Iso0[_, _]](args: AnyRef*)(implicit tag: ClassTag[I]) = {
-    val clazz = tag.runtimeClass
-    isoCache.getOrElseUpdate(
-    (clazz, args), {
-      val constructors = clazz.getDeclaredConstructors()
-      if (constructors.length != 1) {
-        !!!(s"Iso0 class $clazz has ${constructors.length} constructors, 1 expected")
-      } else {
-        val constructor = constructors(0)
-        val constructorArgs = self +: args
-        constructor.newInstance(constructorArgs: _*).asInstanceOf[Iso0[_, _]]
-      }
-    }).asInstanceOf[I]
-  }
-
-  implicit def viewElement[From, To](implicit iso0: Iso0[From, To]): Elem[To] = iso0.eTo // always ask elem from Iso0
+  implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso0
 
   trait ViewElem[From, To] extends Elem[To] { _: scala.Equals =>
-    def iso0: Iso0[From, To]
+    def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
   }
 
   object ViewElem {
-    def unapply[From, To](ve: ViewElem[From, To]): Option[Iso0[From, To]] = Some(ve.iso0)
+    def unapply[From, To](ve: ViewElem[From, To]): Option[Iso0[From, To]] = Some(ve.iso)
   }
 
   trait ViewElem1[A,From,To,C[_]] extends ViewElem[From, To] { _: scala.Equals =>
@@ -169,30 +164,33 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
     def cont: Cont[C]
   }
 
+  class ConcreteIso0Elem[From, To, IsoType <: Iso0[From, To]](_eFrom: Elem[From], _eTo: Elem[To]) extends Iso0Elem[From, To, IsoType]()(_eFrom, _eTo)
+
   object UnpackableElem {
     def unapply(e: Elem[_]) =
       if (shouldUnpack(e)) {
-        val iso0 = getIsoByElem(e)
-        if (iso0.isIdentity)
+        val iso = getIsoByElem(e)
+        if (iso.isIdentity)
           None
         else
-          Some(iso0)
+          Some(iso)
       }
       else None
   }
 
   def shouldUnpack(e: Elem[_]): Boolean
 
-  def getIsoByElem[T](e: Elem[T]): Iso0[_, T] = isoCache.getOrElseUpdate(
-    (classOf[Iso0[_, _]], Seq(e)),
+  private[this] val isoCache = MutMap.empty[Elem[_], Iso[_, _]]
+
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(e,
     e match {
       case ve: ViewElem[_,_] =>
-        val eFrom = ve.iso0.eFrom
-        val deepIso0 = getIsoByElem(eFrom)
-        if (deepIso0.isIdentity)
-          ve.iso0
+        val eFrom = ve.iso.eFrom
+        val deepIso = getIsoByElem(eFrom)
+        if (deepIso.isIdentity)
+          ve.iso
         else
-          composeIso(ve.iso0, deepIso0)
+          composeIso(ve.iso, deepIso)
       case pe: PairElem[a,b] =>
         val iso1 = getIsoByElem(pe.eFst)
         val iso2 = getIsoByElem(pe.eSnd)
@@ -222,13 +220,13 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
 
       case we: WrapperElem1[a, Def[ext], cbase, cw] @unchecked =>
         val eExt = we.eTo
-        val iso0 = getIsoByElem(eExt)
-        iso0
+        val iso = getIsoByElem(eExt)
+        iso
 
       case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
         val eExt = we.eTo
-        val iso0 = getIsoByElem(eExt)
-        iso0
+        val iso = getIsoByElem(eExt)
+        iso
 
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso0 = getIsoByElem(ee1.eItem)
@@ -240,36 +238,18 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
         identityIso(be)
       case _ => !!!(s"Don't know how to build iso0 for element $e")
     }
-  ).asInstanceOf[Iso0[_,T]]
+  ).asInstanceOf[Iso[_, T]]
 
-  def isConcreteElem[T](e: Elem[T]): Boolean = e match {
-    case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
-    case e: SumElem[_, _] => e.eLeft.isConcrete && e.eRight.isConcrete
-    case e: FuncElem[_, _] => e.eDom.isConcrete && e.eRange.isConcrete
-    case e: ArrayElem[_] => e.eItem.isConcrete
-    case e: ListElem[_] => e.eItem.isConcrete
-    case e: ArrayBufferElem[_] => e.eItem.isConcrete
-    case _: ViewElem[_,_] => true
-    case _: EntityElem[_] => false
-    case _: BaseElem[_] => true
-    case _ => !!!(s"isConcrete is not defined for Elem $e")
-  }
+  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso0[A]()(elem)
 
-  implicit class ElemOps[T](e: Elem[T]) {
-    def isConcrete = isConcreteElem(e)
-    def getDataIso0 = getIsoByElem(e)
-  }
+  def pairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] =
+    PairIso0[A1, A2, B1, B2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
 
-  def identityIso[A](implicit elem: Elem[A]): Iso0[A, A] = cachedIso[IdentityIso0[A]](elem)
-
-  def pairIso[A1, A2, B1, B2](iso1: Iso0[A1, B1], iso2: Iso0[A2, B2]): Iso0[(A1, A2), (B1, B2)] =
-    cachedIso[PairIso0[A1, A2, B1, B2]](iso1, iso2)
-
-  def sumIso[A1, A2, B1, B2](iso1: Iso0[A1, B1], iso2: Iso0[A2, B2]): Iso0[A1 | A2, B1 | B2] =
+  def sumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] =
     ???
 //    cachedIso[SumIso0[A1, A2, B1, B2]](iso1, iso2)
 
-  def composeIso[A, B, C](iso2: Iso0[B, C], iso1: Iso0[A, B]): Iso0[A, C] = {
+  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
     ???
 //    ((iso2, iso1) match {
 //        // TODO uncomment and make it compile
@@ -281,35 +261,27 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
 //    }).asInstanceOf[Iso0[A, C]]
   }
 
-  def funcIso[A, B, C, D](iso1: Iso0[A, B], iso2: Iso0[C, D]): Iso0[A => C, B => D] =
+  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
     ??? // cachedIso[FuncIso0[A, B, C, D]](iso1, iso2)
 
-  def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso0[A,B] =
+  def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] =
     ??? // cachedIso[ConverterIso0[A, B]](convTo.asInstanceOf[AnyRef], convFrom.asInstanceOf[AnyRef])
 
-  def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso0: Iso0[B,C]): Iso0[A, C] = composeIso(iso0, converterIso(convTo, convFrom))
+  def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso0: Iso[B,C]): Iso[A, C] = composeIso(iso0, converterIso(convTo, convFrom))
 
-  def convertAfterIso[A,B,C](iso0: Iso0[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso0[A, C] = composeIso(converterIso(convTo, convFrom), iso0)
+  def convertAfterIso[A,B,C](iso0: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = composeIso(converterIso(convTo, convFrom), iso0)
 
-  def unifyIsos[A,B,C,D](iso1: Iso0[A,C], iso2: Iso0[B,D],
-                         toD: Conv[C,D], toC: Conv[D,C]): (Iso0[A,C], Iso0[B,C]) = {
+  def unifyIsos[A,B,C,D](iso1: Iso[A,C], iso2: Iso[B,D],
+                         toD: Conv[C,D], toC: Conv[D,C]): (Iso[A,C], Iso[B,C]) = {
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
     val (i1, i2) =
       if (ec == iso2.eTo)
-        (iso1, iso2.asInstanceOf[Iso0[B,C]])
+        (iso1, iso2.asInstanceOf[Iso[B,C]])
       else
         (iso1, convertAfterIso(iso2, toC, toD))
     (i1, i2)
-  }
-
-  implicit class RepDefViewOps[T <: Def[_]](x: Rep[T]) {
-    def convertTo[R <: Def[_]](implicit eR: Elem[R]): Rep[R] =
-      eR match {
-        case entE: EntityElem[R] @unchecked => entE.convert(x)
-        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found")
-      }
   }
 }
 
@@ -377,7 +349,7 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = d.selfType
           eT match {
-//            case UnpackableElem(iso0: Iso0[a, T @unchecked]) =>
+//            case UnpackableElem(iso0: Iso[a, T @unchecked]) =>
 //              Some((iso0.from(d.self), iso0))
             case _ => None
           }
@@ -391,7 +363,7 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = e.elem
           eT match {
-//            case UnpackableElem(iso0: Iso0[a, T @unchecked]) =>
+//            case UnpackableElem(iso0: Iso[a, T @unchecked]) =>
 //              Some((iso0.from(e), iso0))
             case _ => None
           }
@@ -400,7 +372,7 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp { self: ScalanExp =>
 
   object LambdaResultHasViews {
     def unapply[A,C](l: Rep[A => C]): Option[UnpackedLambdaResult[A,C]] = l match {
-//      case Def(Lambda(_, _, _, HasViews(_, iso0: Iso0[b, _]))) =>
+//      case Def(Lambda(_, _, _, HasViews(_, iso0: Iso[b, _]))) =>
 //        Some((l, iso0))
       case _ => None
     }
@@ -408,55 +380,51 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp { self: ScalanExp =>
 
   abstract class View[From, To] extends Def[To] {
     def source: Rep[From]
-    def iso0: Iso[From, To]
-    implicit def selfType = iso0.eTo
-    def copy(source: Rep[From]): View[From, To]
-    def mirror(t: Transformer) = copy(t(source))
+    def iso: Iso[From, To]
+    implicit lazy val selfType = iso.eTo
   }
 
   case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
     implicit def selfType = iso.eFrom
   }
 
-  abstract class View1[A, B, C[_]](val iso0: Iso1[A,B,C]) extends View[C[A], C[B]] {
-    def innerIso = iso0.innerIso
+  abstract class View1[A, B, C[_]](val iso: Iso1[A,B,C]) extends View[C[A], C[B]] {
+    def innerIso = iso.innerIso
   }
 
-  abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val iso1: Iso0[A1, B1], val iso2: Iso0[A2, B2]) extends View[C[A1, A2], C[B1, B2]]
+  abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val iso1: Iso[A1, B1], val iso2: Iso[A2, B2]) extends View[C[A1, A2], C[B1, B2]]
 
-  case class PairView[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso0[A1, B1], iso2: Iso0[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
-    lazy val iso0 = pairIso(iso1, iso2)
-    def copy(source: Rep[(A1, A2)]) = PairView(source)
+  case class PairView[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
+    lazy val iso = pairIso(iso1, iso2)
   }
 
-  case class SumView[A1, A2, B1, B2](source: Rep[A1|A2])(implicit iso1: Iso0[A1, B1], iso2: Iso0[A2, B2]) extends View2[A1, A2, B1, B2, | ] {
-    lazy val iso0 = sumIso(iso1, iso2)
-    def copy(source: Rep[A1|A2]) = SumView(source)
+  case class SumView[A1, A2, B1, B2](source: Rep[A1|A2])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, | ] {
+    lazy val iso = sumIso(iso1, iso2)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
     // Rule: (V(a, iso1), V(b, iso2)) ==> V((a,b), PairIso0(iso1, iso2))
-    case Tup(Def(UnpackableDef(a, iso1: Iso0[a, c])), Def(UnpackableDef(b, iso2: Iso0[b, d]))) =>
+    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)
 
     // Rule: (V(a, iso1), b) ==> V((a,b), PairIso0(iso1, id))
-    case Tup(Def(UnpackableDef(a, iso1: Iso0[a, c])), b: Rep[b]) =>
+    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
       PairView((a.asRep[a], b))(iso1, identityIso(b.elem)).self
 
     // Rule: (a, V(b, iso2)) ==> V((a,b), PairIso0(id, iso2))
-    case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso0[b, d]))) =>
+    case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       PairView((a, b.asRep[b]))(identityIso(a.elem), iso2).self
 
 //    // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
-//    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso0[a, c])), Def(UnpackableDef(b, iso2: Iso0[b, d]))) =>
+//    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
 //      iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
 //
 //    // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
-//    case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso0[b, d]))) =>
+//    case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
 //      iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
 
     // Rule: V(a, iso1) ; b ==> a ; b
-    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso0[a, c])), b: Rep[b]) =>
+    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
       Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
 
     // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)

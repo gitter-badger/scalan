@@ -84,14 +84,19 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BoolCollBitSetIso
-    extends Iso[BoolCollBitSetData, BoolCollBitSet] {
+    extends Iso0[BoolCollBitSetData, BoolCollBitSet] {
     override def from(p: Rep[BoolCollBitSet]) =
       p.bits
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
     }
-    lazy val eTo = new BoolCollBitSetElem(this)
+    lazy val eFrom = element[Collection[Boolean]]
+    lazy val eTo = new BoolCollBitSetElem(self)
+    lazy val selfType = new ConcreteIso0Elem[BoolCollBitSetData, BoolCollBitSet, BoolCollBitSetIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[BoolCollBitSetData, BoolCollBitSet]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class BoolCollBitSetCompanionAbs extends CompanionDef[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {
@@ -123,7 +128,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBoolCollBitSet: Iso[BoolCollBitSetData, BoolCollBitSet] =
-    cachedIso[BoolCollBitSetIso]()
+    reifyObject(new BoolCollBitSetIso())
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]

@@ -90,14 +90,19 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReaderBaseIso[Env, A](implicit eEnv: Elem[Env], eA: Elem[A])
-    extends Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
+    extends Iso0[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override def from(p: Rep[ReaderBase[Env, A]]) =
       p.run
     override def to(p: Rep[Env => A]) = {
       val run = p
       ReaderBase(run)
     }
-    lazy val eTo = new ReaderBaseElem[Env, A](this)
+    lazy val eFrom = element[Env => A]
+    lazy val eTo = new ReaderBaseElem[Env, A](self)
+    lazy val selfType = new ConcreteIso0Elem[ReaderBaseData[Env, A], ReaderBase[Env, A], ReaderBaseIso[Env, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ReaderBaseData[Env, A], ReaderBase[Env, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eEnv, eA).productElement(n)
   }
   // 4) constructor and deconstructor
   class ReaderBaseCompanionAbs extends CompanionDef[ReaderBaseCompanionAbs] with ReaderBaseCompanion {
@@ -129,7 +134,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReaderBase[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] =
-    cachedIso[ReaderBaseIso[Env, A]](eEnv, eA)
+    reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
 
   // 6) smart constructor and deconstructor
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]

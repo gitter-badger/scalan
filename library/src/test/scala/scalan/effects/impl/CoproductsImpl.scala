@@ -89,14 +89,19 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CoproductImplIso[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
+    extends Iso0[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override def from(p: Rep[CoproductImpl[F, G, A]]) =
       p.run
     override def to(p: Rep[Either[F[A], G[A]]]) = {
       val run = p
       CoproductImpl(run)
     }
-    lazy val eTo = new CoproductImplElem[F, G, A](this)
+    lazy val eFrom = element[Either[F[A], G[A]]]
+    lazy val eTo = new CoproductImplElem[F, G, A](self)
+    lazy val selfType = new ConcreteIso0Elem[CoproductImplData[F, G, A], CoproductImpl[F, G, A], CoproductImplIso[F, G, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CoproductImplData[F, G, A], CoproductImpl[F, G, A]]]]
+    def productArity = 3
+    def productElement(n: Int) = (cF, cG, eA).productElement(n)
   }
   // 4) constructor and deconstructor
   class CoproductImplCompanionAbs extends CompanionDef[CoproductImplCompanionAbs] with CoproductImplCompanion {
@@ -128,7 +133,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCoproductImpl[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] =
-    cachedIso[CoproductImplIso[F, G, A]](cF, cG, eA)
+    reifyObject(new CoproductImplIso[F, G, A]()(cF, cG, eA))
 
   // 6) smart constructor and deconstructor
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]

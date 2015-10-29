@@ -38,10 +38,16 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }
 
-  case class SHashSetIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SHashSet](iso) {
-    def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
-    def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
+  case class SHashSetIso[A, B](innerIso: Iso[A, B]) extends Iso10[A, B, SHashSet] {
+    lazy val selfType = new ConcreteIso0Elem[SHashSet[A], SHashSet[B], SHashSetIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SHashSet[A], SHashSet[B]]]]
+    def cC = container[SHashSet]
+    def from(x: Rep[SHashSet[B]]) = x.map(innerIso.fromFun)
+    def to(x: Rep[SHashSet[A]]) = x.map(innerIso.toFun)
   }
+
+  def sHashSetIso[A, B](innerIso: Iso[A, B]) =
+    reifyObject(SHashSetIso[A, B](innerIso)).asInstanceOf[Iso1[A, B, SHashSet]]
 
   // familyElem
   class SHashSetElem[A, To <: SHashSet[A]](implicit _eA: Elem[A])
@@ -136,14 +142,19 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SHashSetImplIso[A](implicit eA: Elem[A])
-    extends Iso[SHashSetImplData[A], SHashSetImpl[A]] {
+    extends Iso0[SHashSetImplData[A], SHashSetImpl[A]] {
     override def from(p: Rep[SHashSetImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[HashSet[A]]) = {
       val wrappedValue = p
       SHashSetImpl(wrappedValue)
     }
-    lazy val eTo = new SHashSetImplElem[A](this)
+    lazy val eFrom = element[HashSet[A]]
+    lazy val eTo = new SHashSetImplElem[A](self)
+    lazy val selfType = new ConcreteIso0Elem[SHashSetImplData[A], SHashSetImpl[A], SHashSetImplIso[A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SHashSetImplData[A], SHashSetImpl[A]]]]
+    def productArity = 1
+    def productElement(n: Int) = eA
   }
   // 4) constructor and deconstructor
   class SHashSetImplCompanionAbs extends CompanionDef[SHashSetImplCompanionAbs] {
@@ -175,7 +186,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSHashSetImpl[A](implicit eA: Elem[A]): Iso[SHashSetImplData[A], SHashSetImpl[A]] =
-    cachedIso[SHashSetImplIso[A]](eA)
+    reifyObject(new SHashSetImplIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValue: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
@@ -228,8 +239,8 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
         List(element[A]))
   }
 
-  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
-    extends View1[A, B, SHashSet](iso) {
+  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso[A, B])
+    extends View1[A, B, SHashSet](sHashSetIso(iso)) {
     override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -335,7 +346,7 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
     case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) =>
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
-      ViewSHashSet(arr)(SHashSetIso(compIso))
+      ViewSHashSet(arr)(compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -357,11 +368,11 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
           val tmp = f1(x)
           iso.from(tmp)
         })
-        val res = ViewSHashSet(s)(SHashSetIso(iso))
+        val res = ViewSHashSet(s)(iso)
         res
       case (HasViews(source, contIso: SHashSetIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
-        val iso = contIso.iso
+        val iso = contIso.innerIso
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
         implicit val eC = f1.elem.eRange

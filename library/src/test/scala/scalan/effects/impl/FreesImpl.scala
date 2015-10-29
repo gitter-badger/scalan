@@ -89,14 +89,19 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[ReturnData[F, A], Return[F, A]] {
+    extends Iso0[ReturnData[F, A], Return[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
     }
-    lazy val eTo = new ReturnElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new ReturnElem[F, A](self)
+    lazy val selfType = new ConcreteIso0Elem[ReturnData[F, A], Return[F, A], ReturnIso[F, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ReturnData[F, A], Return[F, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -128,7 +133,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    cachedIso[ReturnIso[F, A]](eA, cF)
+    reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -162,14 +167,19 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SuspendIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[SuspendData[F, A], Suspend[F, A]] {
+    extends Iso0[SuspendData[F, A], Suspend[F, A]] {
     override def from(p: Rep[Suspend[F, A]]) =
       p.a
     override def to(p: Rep[F[A]]) = {
       val a = p
       Suspend(a)
     }
-    lazy val eTo = new SuspendElem[F, A](this)
+    lazy val eFrom = element[F[A]]
+    lazy val eTo = new SuspendElem[F, A](self)
+    lazy val selfType = new ConcreteIso0Elem[SuspendData[F, A], Suspend[F, A], SuspendIso[F, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SuspendData[F, A], Suspend[F, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class SuspendCompanionAbs extends CompanionDef[SuspendCompanionAbs] with SuspendCompanion {
@@ -201,7 +211,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSuspend[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[SuspendData[F, A], Suspend[F, A]] =
-    cachedIso[SuspendIso[F, A]](eA, cF)
+    reifyObject(new SuspendIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkSuspend[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]]
@@ -236,14 +246,19 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Free[F, S]]], implicitly[Elem[S => Free[F, B]]])) {
+    extends Iso0[BindData[F, S, B], Bind[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Free[F, S], S => Free[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val eTo = new BindElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[Free[F, S]], element[S => Free[F, B]])
+    lazy val eTo = new BindElem[F, S, B](self)
+    lazy val selfType = new ConcreteIso0Elem[BindData[F, S, B], Bind[F, S, B], BindIso[F, S, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[BindData[F, S, B], Bind[F, S, B]]]]
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
@@ -276,7 +291,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    cachedIso[BindIso[F, S, B]](eS, eA, cF)
+    reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]

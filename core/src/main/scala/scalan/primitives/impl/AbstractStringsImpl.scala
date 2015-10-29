@@ -84,14 +84,19 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SStringIso
-    extends Iso[SStringData, SString] {
+    extends Iso0[SStringData, SString] {
     override def from(p: Rep[SString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {
       val wrappedValue = p
       SString(wrappedValue)
     }
-    lazy val eTo = new SStringElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new SStringElem(self)
+    lazy val selfType = new ConcreteIso0Elem[SStringData, SString, SStringIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SStringData, SString]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class SStringCompanionAbs extends CompanionDef[SStringCompanionAbs] with SStringCompanion {
@@ -123,7 +128,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSString: Iso[SStringData, SString] =
-    cachedIso[SStringIso]()
+    reifyObject(new SStringIso())
 
   // 6) smart constructor and deconstructor
   def mkSString(wrappedValue: Rep[String]): Rep[SString]
@@ -155,14 +160,19 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CStringIso
-    extends Iso[CStringData, CString] {
+    extends Iso0[CStringData, CString] {
     override def from(p: Rep[CString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {
       val wrappedValue = p
       CString(wrappedValue)
     }
-    lazy val eTo = new CStringElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new CStringElem(self)
+    lazy val selfType = new ConcreteIso0Elem[CStringData, CString, CStringIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CStringData, CString]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class CStringCompanionAbs extends CompanionDef[CStringCompanionAbs] with CStringCompanion {
@@ -194,7 +204,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCString: Iso[CStringData, CString] =
-    cachedIso[CStringIso]()
+    reifyObject(new CStringIso())
 
   // 6) smart constructor and deconstructor
   def mkCString(wrappedValue: Rep[String]): Rep[CString]

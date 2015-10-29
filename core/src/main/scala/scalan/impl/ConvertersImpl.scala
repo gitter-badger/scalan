@@ -90,14 +90,19 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class BaseConverterIso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends Iso[BaseConverterData[T, R], BaseConverter[T, R]] {
+    extends Iso0[BaseConverterData[T, R], BaseConverter[T, R]] {
     override def from(p: Rep[BaseConverter[T, R]]) =
       p.convFun
     override def to(p: Rep[T => R]) = {
       val convFun = p
       BaseConverter(convFun)
     }
-    lazy val eTo = new BaseConverterElem[T, R](this)
+    lazy val eFrom = element[T => R]
+    lazy val eTo = new BaseConverterElem[T, R](self)
+    lazy val selfType = new ConcreteIso0Elem[BaseConverterData[T, R], BaseConverter[T, R], BaseConverterIso[T, R]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[BaseConverterData[T, R], BaseConverter[T, R]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eT, eR).productElement(n)
   }
   // 4) constructor and deconstructor
   class BaseConverterCompanionAbs extends CompanionDef[BaseConverterCompanionAbs] with BaseConverterCompanion {
@@ -129,7 +134,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseConverter[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[BaseConverterData[T, R], BaseConverter[T, R]] =
-    cachedIso[BaseConverterIso[T, R]](eT, eR)
+    reifyObject(new BaseConverterIso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
   def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
@@ -166,14 +171,19 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class PairConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1, B1]]], implicitly[Elem[Converter[A2, B2]]])) {
+    extends Iso0[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] {
     override def from(p: Rep[PairConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       PairConverter(conv1, conv2)
     }
-    lazy val eTo = new PairConverterElem[A1, A2, B1, B2](this)
+    lazy val eFrom = pairElement(element[Converter[A1, B1]], element[Converter[A2, B2]])
+    lazy val eTo = new PairConverterElem[A1, A2, B1, B2](self)
+    lazy val selfType = new ConcreteIso0Elem[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2], PairConverterIso[A1, A2, B1, B2]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]]]]
+    def productArity = 4
+    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
   }
   // 4) constructor and deconstructor
   class PairConverterCompanionAbs extends CompanionDef[PairConverterCompanionAbs] with PairConverterCompanion {
@@ -206,7 +216,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoPairConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] =
-    cachedIso[PairConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
+    reifyObject(new PairConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   // 6) smart constructor and deconstructor
   def mkPairConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]]
@@ -243,14 +253,19 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class SumConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1, B1]]], implicitly[Elem[Converter[A2, B2]]])) {
+    extends Iso0[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] {
     override def from(p: Rep[SumConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       SumConverter(conv1, conv2)
     }
-    lazy val eTo = new SumConverterElem[A1, A2, B1, B2](this)
+    lazy val eFrom = pairElement(element[Converter[A1, B1]], element[Converter[A2, B2]])
+    lazy val eTo = new SumConverterElem[A1, A2, B1, B2](self)
+    lazy val selfType = new ConcreteIso0Elem[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2], SumConverterIso[A1, A2, B1, B2]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]]]]
+    def productArity = 4
+    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
   }
   // 4) constructor and deconstructor
   class SumConverterCompanionAbs extends CompanionDef[SumConverterCompanionAbs] with SumConverterCompanion {
@@ -283,7 +298,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoSumConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] =
-    cachedIso[SumConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
+    reifyObject(new SumConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   // 6) smart constructor and deconstructor
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
@@ -318,14 +333,19 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class FunctorConverterIso[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
-    extends Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
+    extends Iso0[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override def from(p: Rep[FunctorConverter[A, B, F]]) =
       p.itemConv
     override def to(p: Rep[Converter[A, B]]) = {
       val itemConv = p
       FunctorConverter(itemConv)
     }
-    lazy val eTo = new FunctorConverterElem[A, B, F](this)
+    lazy val eFrom = element[Converter[A, B]]
+    lazy val eTo = new FunctorConverterElem[A, B, F](self)
+    lazy val selfType = new ConcreteIso0Elem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F], FunctorConverterIso[A, B, F]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]]]]
+    def productArity = 3
+    def productElement(n: Int) = (eA, eB, F).productElement(n)
   }
   // 4) constructor and deconstructor
   class FunctorConverterCompanionAbs extends CompanionDef[FunctorConverterCompanionAbs] with FunctorConverterCompanion {
@@ -357,7 +377,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoFunctorConverter[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] =
-    cachedIso[FunctorConverterIso[A, B, F]](eA, eB, F)
+    reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
 
   // 6) smart constructor and deconstructor
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]

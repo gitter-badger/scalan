@@ -165,14 +165,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class UnitCollectionIso
-    extends Iso[UnitCollectionData, UnitCollection] {
+    extends Iso0[UnitCollectionData, UnitCollection] {
     override def from(p: Rep[UnitCollection]) =
       p.length
     override def to(p: Rep[Int]) = {
       val length = p
       UnitCollection(length)
     }
-    lazy val eTo = new UnitCollectionElem(this)
+    lazy val eFrom = element[Int]
+    lazy val eTo = new UnitCollectionElem(self)
+    lazy val selfType = new ConcreteIso0Elem[UnitCollectionData, UnitCollection, UnitCollectionIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[UnitCollectionData, UnitCollection]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class UnitCollectionCompanionAbs extends CompanionDef[UnitCollectionCompanionAbs] with UnitCollectionCompanion {
@@ -204,7 +209,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoUnitCollection: Iso[UnitCollectionData, UnitCollection] =
-    cachedIso[UnitCollectionIso]()
+    reifyObject(new UnitCollectionIso())
 
   // 6) smart constructor and deconstructor
   def mkUnitCollection(length: Rep[Int]): Rep[UnitCollection]
@@ -237,14 +242,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverArrayIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
+    extends Iso0[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override def from(p: Rep[CollectionOverArray[Item]]) =
       p.arr
     override def to(p: Rep[Array[Item]]) = {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val eTo = new CollectionOverArrayElem[Item](this)
+    lazy val eFrom = element[Array[Item]]
+    lazy val eTo = new CollectionOverArrayElem[Item](self)
+    lazy val selfType = new ConcreteIso0Elem[CollectionOverArrayData[Item], CollectionOverArray[Item], CollectionOverArrayIso[Item]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CollectionOverArrayData[Item], CollectionOverArray[Item]]]]
+    def productArity = 1
+    def productElement(n: Int) = eItem
   }
   // 4) constructor and deconstructor
   class CollectionOverArrayCompanionAbs extends CompanionDef[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
@@ -276,7 +286,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverArray[Item](implicit eItem: Elem[Item]): Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] =
-    cachedIso[CollectionOverArrayIso[Item]](eItem)
+    reifyObject(new CollectionOverArrayIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverArray[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]]
@@ -309,14 +319,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverListIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverListData[Item], CollectionOverList[Item]] {
+    extends Iso0[CollectionOverListData[Item], CollectionOverList[Item]] {
     override def from(p: Rep[CollectionOverList[Item]]) =
       p.lst
     override def to(p: Rep[List[Item]]) = {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val eTo = new CollectionOverListElem[Item](this)
+    lazy val eFrom = element[List[Item]]
+    lazy val eTo = new CollectionOverListElem[Item](self)
+    lazy val selfType = new ConcreteIso0Elem[CollectionOverListData[Item], CollectionOverList[Item], CollectionOverListIso[Item]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CollectionOverListData[Item], CollectionOverList[Item]]]]
+    def productArity = 1
+    def productElement(n: Int) = eItem
   }
   // 4) constructor and deconstructor
   class CollectionOverListCompanionAbs extends CompanionDef[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
@@ -348,7 +363,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverList[Item](implicit eItem: Elem[Item]): Iso[CollectionOverListData[Item], CollectionOverList[Item]] =
-    cachedIso[CollectionOverListIso[Item]](eItem)
+    reifyObject(new CollectionOverListIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverList[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]]
@@ -381,14 +396,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverSeqIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
+    extends Iso0[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override def from(p: Rep[CollectionOverSeq[Item]]) =
       p.seq
     override def to(p: Rep[SSeq[Item]]) = {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val eTo = new CollectionOverSeqElem[Item](this)
+    lazy val eFrom = element[SSeq[Item]]
+    lazy val eTo = new CollectionOverSeqElem[Item](self)
+    lazy val selfType = new ConcreteIso0Elem[CollectionOverSeqData[Item], CollectionOverSeq[Item], CollectionOverSeqIso[Item]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CollectionOverSeqData[Item], CollectionOverSeq[Item]]]]
+    def productArity = 1
+    def productElement(n: Int) = eItem
   }
   // 4) constructor and deconstructor
   class CollectionOverSeqCompanionAbs extends CompanionDef[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
@@ -420,7 +440,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverSeq[Item](implicit eItem: Elem[Item]): Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] =
-    cachedIso[CollectionOverSeqIso[Item]](eItem)
+    reifyObject(new CollectionOverSeqIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverSeq[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]]
@@ -454,14 +474,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class PairCollectionSOAIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[Collection[B]]])) {
+    extends Iso0[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override def from(p: Rep[PairCollectionSOA[A, B]]) =
       (p.as, p.bs)
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
     }
-    lazy val eTo = new PairCollectionSOAElem[A, B](this)
+    lazy val eFrom = pairElement(element[Collection[A]], element[Collection[B]])
+    lazy val eTo = new PairCollectionSOAElem[A, B](self)
+    lazy val selfType = new ConcreteIso0Elem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B], PairCollectionSOAIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, eB).productElement(n)
   }
   // 4) constructor and deconstructor
   class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
@@ -494,7 +519,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionSOA[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] =
-    cachedIso[PairCollectionSOAIso[A, B]](eA, eB)
+    reifyObject(new PairCollectionSOAIso[A, B]()(eA, eB))
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionSOA[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]]
@@ -528,14 +553,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class PairCollectionAOSIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
+    extends Iso0[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override def from(p: Rep[PairCollectionAOS[A, B]]) =
       p.coll
     override def to(p: Rep[Collection[(A, B)]]) = {
       val coll = p
       PairCollectionAOS(coll)
     }
-    lazy val eTo = new PairCollectionAOSElem[A, B](this)
+    lazy val eFrom = element[Collection[(A, B)]]
+    lazy val eTo = new PairCollectionAOSElem[A, B](self)
+    lazy val selfType = new ConcreteIso0Elem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B], PairCollectionAOSIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, eB).productElement(n)
   }
   // 4) constructor and deconstructor
   class PairCollectionAOSCompanionAbs extends CompanionDef[PairCollectionAOSCompanionAbs] with PairCollectionAOSCompanion {
@@ -567,7 +597,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionAOS[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] =
-    cachedIso[PairCollectionAOSIso[A, B]](eA, eB)
+    reifyObject(new PairCollectionAOSIso[A, B]()(eA, eB))
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionAOS[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]]
@@ -600,14 +630,19 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class NestedCollectionFlatIso[A](implicit eA: Elem[A])
-    extends Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[PairCollection[Int, Int]]])) {
+    extends Iso0[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override def from(p: Rep[NestedCollectionFlat[A]]) =
       (p.values, p.segments)
     override def to(p: Rep[(Collection[A], PairCollection[Int, Int])]) = {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
     }
-    lazy val eTo = new NestedCollectionFlatElem[A](this)
+    lazy val eFrom = pairElement(element[Collection[A]], element[PairCollection[Int, Int]])
+    lazy val eTo = new NestedCollectionFlatElem[A](self)
+    lazy val selfType = new ConcreteIso0Elem[NestedCollectionFlatData[A], NestedCollectionFlat[A], NestedCollectionFlatIso[A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[NestedCollectionFlatData[A], NestedCollectionFlat[A]]]]
+    def productArity = 1
+    def productElement(n: Int) = eA
   }
   // 4) constructor and deconstructor
   class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
@@ -640,7 +675,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoNestedCollectionFlat[A](implicit eA: Elem[A]): Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] =
-    cachedIso[NestedCollectionFlatIso[A]](eA)
+    reifyObject(new NestedCollectionFlatIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]

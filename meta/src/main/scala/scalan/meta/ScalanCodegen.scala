@@ -132,12 +132,16 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
     def entityElemMethodName(name: String) = StringUtil.lowerCaseFirst(name) + "Element"
 
+    // TODO remove this hack
+    private[this] val highOrderTpes = Set("Array")
     def tpeToElement(t: STpeExpr, env: List[STpeArg]): String = t match {
       case STpePrimitive(name,_) => name + "Element"
       case STpeTuple(List(a, b)) => s"pairElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
       case STpeFunc(a, b) => s"funcElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
       case STraitCall("$bar", List(a,b)) => s"sumElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
       case STraitCall(name, Nil) if STpePrimitives.contains(name) => name + "Element"
+      case STraitCall(name, Nil) if highOrderTpes.contains(name) =>
+        s"container[$name]"
 //      case STraitCall(name, Nil)  => s"element[$name]"
       case STraitCall(name, args) if env.exists(_.name == name) =>
         val a = env.find(_.name == name).get
@@ -352,10 +356,16 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  ${container(e.name, e.isFunctor)}
         |
-        |  case class ${e.name}Iso[A, B](iso: Iso[A, B]) extends Iso1[A, B, ${e.name}](iso) {
-        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.fromFun)
-        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.toFun)
+        |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso10[A, B, ${e.name}] {
+        |    lazy val selfType = new ConcreteIso0Elem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
+        |      asInstanceOf[Elem[Iso0[${e.name}[A], ${e.name}[B]]]]
+        |    def cC = container[${e.name}]
+        |    def from(x: Rep[${e.name}[B]]) = x.map(innerIso.fromFun)
+        |    def to(x: Rep[${e.name}[A]]) = x.map(innerIso.toFun)
         |  }
+        |
+        |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
+        |    reifyObject(${e.name}Iso[A, B](innerIso)).asInstanceOf[Iso1[A, B, ${e.name}]]
         |""".stripAndTrim
       }
 
@@ -544,8 +554,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
                |""".stripAndTrim
         }
 
-        // necessary in cases Scala type inference fails
-        val maybeElemHack = {
+        val eFrom = {
           val elemMethodName = StringUtil.lowerCaseFirst(className + "DataElem")
           if (module.methods.exists(_.name == elemMethodName))
             s"()($elemMethodName)"
@@ -554,20 +563,23 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             def implElem(args: List[String])(str0: String): String = {
               val size = args.length
               if (size > 2) {
-                val str = str0 + s"pairElement(implicitly[Elem[${args(0)}]], "
+                val str = str0 + s"pairElement(element[${args(0)}], "
                 implElem(args.drop(1))(str)
               }
               else {
-                if (size > 1) str0 + s"pairElement(implicitly[Elem[${args(0)}]], implicitly[Elem[${args(1)}]])"
-                else str0 + s"(implicitly[Elem[${args(0)}]])"
+                if (size > 1) str0 + s"pairElement(element[${args(0)}], element[${args(1)}])"
+                else str0 + s"(element[${args(0)}])"
               }
             }
             val args = fieldTypes.map(_.toString)
-            if (args.length >= 2) {
-              val impls = implElem(args)("")
-              val sk = ")" * (args.length - 2)
-              s"()(${impls + sk})"
-            } else ""
+            args.length match {
+              case n if n >= 2 =>
+                val impls = implElem(args)("")
+                val sk = ")" * (n - 2)
+                impls + sk
+              case 1 => s"element[${args(0)}]"
+              case 0 => "UnitElement"
+            }
           }
         }
 
@@ -600,6 +612,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
         // note: ${className}Iso.eTo doesn't call cachedElem because
         // they are already cached via Isos + lazy val and this would lead to stack overflow
+        val isoProductArity = c.implicitArgs.length
+        // TODO improve productElement to match on n
+        val isoProductElementBody = isoProductArity match {
+          case 0 => "???"
+          case 1 => c.implicitArgs(0).name
+          case _ => s"${implicitArgsUse}.productElement(n)"
+        }
+        val parentIsoType = s"Iso0[$dataTpe, ${c.typeUse}]"
         s"""
         |$defaultImpl
         |  // elem for concrete class
@@ -624,14 +644,19 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  // 3) Iso for concrete class
         |  class ${className}Iso${tpeArgsDecl}${implicitArgsDecl}
-        |    extends Iso[$dataTpe, ${c.typeUse}]$maybeElemHack {
+        |    extends $parentIsoType {
         |    override def from(p: Rep[${c.typeUse}]) =
         |      ${fields.map(fields => "p." + fields).opt(s => if (s.toList.length > 1) s"(${s.rep()})" else s.rep(), "()")}
         |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
         |      val ${pairify(fields)} = p
         |      $className(${fields.rep()})
         |    }
-        |    lazy val eTo = new ${c.elemTypeUse}(this)
+        |    lazy val eFrom = $eFrom
+        |    lazy val eTo = new ${c.elemTypeUse}(self)
+        |    lazy val selfType = new ConcreteIso0Elem[$dataTpe, ${c.typeUse}, ${className}Iso$tpeArgsUse](eFrom, eTo).
+        |      asInstanceOf[Elem[$parentIsoType]]
+        |    def productArity = $isoProductArity
+        |    def productElement(n: Int) = $isoProductElementBody
         |  }
         |  // 4) constructor and deconstructor
         |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${c.companionName}")} {
@@ -666,7 +691,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  // 5) implicit resolution of Iso
         |  implicit def iso${c.typeDecl}${implicitArgsDecl}: Iso[$dataTpe, ${c.typeUse}] =
-        |    cachedIso[${className}Iso${tpeArgsUse}]$implicitArgsOrParens
+        |    reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
         |
         |  // 6) smart constructor and deconstructor
         |  def mk${c.typeDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}]
@@ -797,8 +822,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
     def familyView(e: EntityTemplateData) = {
       s"""
-        |  case class View${e.name}[A, B](source: Rep[${e.name}[A]])(iso: Iso1[A, B, ${e.name}])
-        |    extends View1[A, B, ${e.name}](iso) {
+        |  case class View${e.name}[A, B](source: Rep[${e.name}[A]])(iso: Iso[A, B])
+        |    extends View1[A, B, ${e.name}](${StringUtil.lowerCaseFirst(e.name)}Iso(iso)) {
         |    override def toString = s"View${e.name}[$${innerIso.eTo.name}]($$source)"
         |    override def equals(other: Any) = other match {
         |      case v: View${e.name}[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -816,7 +841,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) =>
           |      val compIso = composeIso(view1.innerIso, view2.innerIso)
           |      implicit val eAB = compIso.eTo
-          |      View${e.name}(arr)(${e.name}Iso(compIso))
+          |      View${e.name}(arr)(compIso)
           |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
           |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -838,11 +863,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |          val tmp = f1(x)
           |          iso.from(tmp)
           |        })
-          |        val res = View${e.name}(s)(${e.name}Iso(iso))
+          |        val res = View${e.name}(s)(iso)
           |        res
           |      case (HasViews(source, contIso: ${e.name}Iso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
           |        val f1 = f.asRep[b => c]
-          |        val iso = contIso.iso
+          |        val iso = contIso.innerIso
           |        implicit val eA = iso.eFrom
           |        implicit val eB = iso.eTo
           |        implicit val eC = f1.elem.eRange

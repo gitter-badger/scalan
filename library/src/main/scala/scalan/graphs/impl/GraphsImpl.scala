@@ -92,14 +92,19 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[NestedCollection[E]]], implicitly[Elem[NestedCollection[Int]]]))) {
+    extends Iso0[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
       (p.vertexValues, p.edgeValues, p.links)
     override def to(p: Rep[(Collection[V], (NestedCollection[E], NestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val eTo = new AdjacencyGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[NestedCollection[E]], element[NestedCollection[Int]]))
+    lazy val eTo = new AdjacencyGraphElem[V, E](self)
+    lazy val selfType = new ConcreteIso0Elem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E], AdjacencyGraphIso[V, E]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
   }
   // 4) constructor and deconstructor
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
@@ -132,7 +137,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjacencyGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] =
-    cachedIso[AdjacencyGraphIso[V, E]](eV, eE)
+    reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
@@ -166,14 +171,19 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[Collection[E]]], implicitly[Elem[Int]]))) {
+    extends Iso0[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override def from(p: Rep[IncidenceGraph[V, E]]) =
       (p.vertexValues, p.incMatrixWithVals, p.vertexNum)
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val eTo = new IncidenceGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[Collection[E]], element[Int]))
+    lazy val eTo = new IncidenceGraphElem[V, E](self)
+    lazy val selfType = new ConcreteIso0Elem[IncidenceGraphData[V, E], IncidenceGraph[V, E], IncidenceGraphIso[V, E]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[IncidenceGraphData[V, E], IncidenceGraph[V, E]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
   }
   // 4) constructor and deconstructor
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
@@ -206,7 +216,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncidenceGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] =
-    cachedIso[IncidenceGraphIso[V, E]](eV, eE)
+    reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]

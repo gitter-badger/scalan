@@ -88,14 +88,19 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[ReturnData[F, A], Return[F, A]] {
+    extends Iso0[ReturnData[F, A], Return[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
     }
-    lazy val eTo = new ReturnElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new ReturnElem[F, A](self)
+    lazy val selfType = new ConcreteIso0Elem[ReturnData[F, A], Return[F, A], ReturnIso[F, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ReturnData[F, A], Return[F, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -127,7 +132,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    cachedIso[ReturnIso[F, A]](eA, cF)
+    reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -162,14 +167,19 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Kind[F, S]]], implicitly[Elem[S => Kind[F, B]]])) {
+    extends Iso0[BindData[F, S, B], Bind[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Kind[F, S], S => Kind[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val eTo = new BindElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[Kind[F, S]], element[S => Kind[F, B]])
+    lazy val eTo = new BindElem[F, S, B](self)
+    lazy val selfType = new ConcreteIso0Elem[BindData[F, S, B], Bind[F, S, B], BindIso[F, S, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[BindData[F, S, B], Bind[F, S, B]]]]
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
@@ -202,7 +212,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    cachedIso[BindIso[F, S, B]](eS, eA, cF)
+    reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]

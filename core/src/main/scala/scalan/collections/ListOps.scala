@@ -54,12 +54,13 @@ trait ListOps { self: Scalan =>
     def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
-  case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
-    def from(x: Lst[B]) = x.mapBy(iso.fromFun)
-    def to(x: Lst[A]) = x.mapBy(iso.toFun)
-  }
-
-  def listIso[A,B](iso: Iso[A, B]) = cachedIso[ListIso[A, B]](iso)
+  // TODO uncomment
+//  case class ListIso[A,B](iso: Iso[A,B]) extends Iso10[A, B, List](iso)(iso.eFrom, iso.eTo, container[List]) {
+//    def from(x: Lst[B]) = x.mapBy(iso.fromFun)
+//    def to(x: Lst[A]) = x.mapBy(iso.toFun)
+//  }
+//
+//  def listIso[A,B](iso: Iso[A, B]) = reifyObject(ListIso[A, B](iso)).asInstanceOf[Iso1[A, B, List]]
 
   case class ListElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, List[A], List](eItem, container[List]) {

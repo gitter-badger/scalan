@@ -85,14 +85,19 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BaseFrontIso
-    extends Iso[BaseFrontData, BaseFront]()(pairElement(implicitly[Elem[CollectionOverArray[Int]]], implicitly[Elem[BitSet]])) {
+    extends Iso0[BaseFrontData, BaseFront] {
     override def from(p: Rep[BaseFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverArray[Int], BitSet)]) = {
       val Pair(set, bits) = p
       BaseFront(set, bits)
     }
-    lazy val eTo = new BaseFrontElem(this)
+    lazy val eFrom = pairElement(element[CollectionOverArray[Int]], element[BitSet])
+    lazy val eTo = new BaseFrontElem(self)
+    lazy val selfType = new ConcreteIso0Elem[BaseFrontData, BaseFront, BaseFrontIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[BaseFrontData, BaseFront]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class BaseFrontCompanionAbs extends CompanionDef[BaseFrontCompanionAbs] with BaseFrontCompanion {
@@ -125,7 +130,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseFront: Iso[BaseFrontData, BaseFront] =
-    cachedIso[BaseFrontIso]()
+    reifyObject(new BaseFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkBaseFront(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront]
@@ -158,14 +163,19 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ListFrontIso
-    extends Iso[ListFrontData, ListFront]()(pairElement(implicitly[Elem[CollectionOverList[Int]]], implicitly[Elem[BitSet]])) {
+    extends Iso0[ListFrontData, ListFront] {
     override def from(p: Rep[ListFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverList[Int], BitSet)]) = {
       val Pair(set, bits) = p
       ListFront(set, bits)
     }
-    lazy val eTo = new ListFrontElem(this)
+    lazy val eFrom = pairElement(element[CollectionOverList[Int]], element[BitSet])
+    lazy val eTo = new ListFrontElem(self)
+    lazy val selfType = new ConcreteIso0Elem[ListFrontData, ListFront, ListFrontIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ListFrontData, ListFront]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class ListFrontCompanionAbs extends CompanionDef[ListFrontCompanionAbs] with ListFrontCompanion {
@@ -198,7 +208,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoListFront: Iso[ListFrontData, ListFront] =
-    cachedIso[ListFrontIso]()
+    reifyObject(new ListFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkListFront(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront]
@@ -231,14 +241,19 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionFrontIso
-    extends Iso[CollectionFrontData, CollectionFront]()(pairElement(implicitly[Elem[Collection[Int]]], implicitly[Elem[BitSet]])) {
+    extends Iso0[CollectionFrontData, CollectionFront] {
     override def from(p: Rep[CollectionFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       CollectionFront(set, bits)
     }
-    lazy val eTo = new CollectionFrontElem(this)
+    lazy val eFrom = pairElement(element[Collection[Int]], element[BitSet])
+    lazy val eTo = new CollectionFrontElem(self)
+    lazy val selfType = new ConcreteIso0Elem[CollectionFrontData, CollectionFront, CollectionFrontIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CollectionFrontData, CollectionFront]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class CollectionFrontCompanionAbs extends CompanionDef[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
@@ -271,7 +286,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionFront: Iso[CollectionFrontData, CollectionFront] =
-    cachedIso[CollectionFrontIso]()
+    reifyObject(new CollectionFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
@@ -304,14 +319,19 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MapBasedFrontIso
-    extends Iso[MapBasedFrontData, MapBasedFront] {
+    extends Iso0[MapBasedFrontData, MapBasedFront] {
     override def from(p: Rep[MapBasedFront]) =
       p.mmap
     override def to(p: Rep[MMap[Int, Unit]]) = {
       val mmap = p
       MapBasedFront(mmap)
     }
-    lazy val eTo = new MapBasedFrontElem(this)
+    lazy val eFrom = element[MMap[Int, Unit]]
+    lazy val eTo = new MapBasedFrontElem(self)
+    lazy val selfType = new ConcreteIso0Elem[MapBasedFrontData, MapBasedFront, MapBasedFrontIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[MapBasedFrontData, MapBasedFront]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class MapBasedFrontCompanionAbs extends CompanionDef[MapBasedFrontCompanionAbs] with MapBasedFrontCompanion {
@@ -343,7 +363,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMapBasedFront: Iso[MapBasedFrontData, MapBasedFront] =
-    cachedIso[MapBasedFrontIso]()
+    reifyObject(new MapBasedFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkMapBasedFront(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront]

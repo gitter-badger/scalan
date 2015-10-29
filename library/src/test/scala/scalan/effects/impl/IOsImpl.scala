@@ -88,14 +88,19 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReadFileIso
-    extends Iso[ReadFileData, ReadFile] {
+    extends Iso0[ReadFileData, ReadFile] {
     override def from(p: Rep[ReadFile]) =
       p.fileName
     override def to(p: Rep[String]) = {
       val fileName = p
       ReadFile(fileName)
     }
-    lazy val eTo = new ReadFileElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new ReadFileElem(self)
+    lazy val selfType = new ConcreteIso0Elem[ReadFileData, ReadFile, ReadFileIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ReadFileData, ReadFile]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class ReadFileCompanionAbs extends CompanionDef[ReadFileCompanionAbs] with ReadFileCompanion {
@@ -127,7 +132,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReadFile: Iso[ReadFileData, ReadFile] =
-    cachedIso[ReadFileIso]()
+    reifyObject(new ReadFileIso())
 
   // 6) smart constructor and deconstructor
   def mkReadFile(fileName: Rep[String]): Rep[ReadFile]
@@ -160,14 +165,19 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class WriteFileIso
-    extends Iso[WriteFileData, WriteFile]()(pairElement(implicitly[Elem[String]], implicitly[Elem[List[String]]])) {
+    extends Iso0[WriteFileData, WriteFile] {
     override def from(p: Rep[WriteFile]) =
       (p.fileName, p.lines)
     override def to(p: Rep[(String, List[String])]) = {
       val Pair(fileName, lines) = p
       WriteFile(fileName, lines)
     }
-    lazy val eTo = new WriteFileElem(this)
+    lazy val eFrom = pairElement(element[String], element[List[String]])
+    lazy val eTo = new WriteFileElem(self)
+    lazy val selfType = new ConcreteIso0Elem[WriteFileData, WriteFile, WriteFileIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[WriteFileData, WriteFile]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class WriteFileCompanionAbs extends CompanionDef[WriteFileCompanionAbs] with WriteFileCompanion {
@@ -200,7 +210,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoWriteFile: Iso[WriteFileData, WriteFile] =
-    cachedIso[WriteFileIso]()
+    reifyObject(new WriteFileIso())
 
   // 6) smart constructor and deconstructor
   def mkWriteFile(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile]

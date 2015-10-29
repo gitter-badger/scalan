@@ -92,14 +92,19 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 3) Iso for concrete class
   class StateGetIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends Iso[StateGetData[S, A], StateGet[S, A]] {
+    extends Iso0[StateGetData[S, A], StateGet[S, A]] {
     override def from(p: Rep[StateGet[S, A]]) =
       p.f
     override def to(p: Rep[S => A]) = {
       val f = p
       StateGet(f)
     }
-    lazy val eTo = new StateGetElem[S, A](this)
+    lazy val eFrom = element[S => A]
+    lazy val eTo = new StateGetElem[S, A](self)
+    lazy val selfType = new ConcreteIso0Elem[StateGetData[S, A], StateGet[S, A], StateGetIso[S, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[StateGetData[S, A], StateGet[S, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eS, eA).productElement(n)
   }
   // 4) constructor and deconstructor
   class StateGetCompanionAbs extends CompanionDef[StateGetCompanionAbs] with StateGetCompanion {
@@ -131,7 +136,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateGet[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateGetData[S, A], StateGet[S, A]] =
-    cachedIso[StateGetIso[S, A]](eS, eA)
+    reifyObject(new StateGetIso[S, A]()(eS, eA))
 
   // 6) smart constructor and deconstructor
   def mkStateGet[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]]
@@ -166,14 +171,19 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 3) Iso for concrete class
   class StatePutIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends Iso[StatePutData[S, A], StatePut[S, A]]()(pairElement(implicitly[Elem[S]], implicitly[Elem[A]])) {
+    extends Iso0[StatePutData[S, A], StatePut[S, A]] {
     override def from(p: Rep[StatePut[S, A]]) =
       (p.s, p.a)
     override def to(p: Rep[(S, A)]) = {
       val Pair(s, a) = p
       StatePut(s, a)
     }
-    lazy val eTo = new StatePutElem[S, A](this)
+    lazy val eFrom = pairElement(element[S], element[A])
+    lazy val eTo = new StatePutElem[S, A](self)
+    lazy val selfType = new ConcreteIso0Elem[StatePutData[S, A], StatePut[S, A], StatePutIso[S, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[StatePutData[S, A], StatePut[S, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eS, eA).productElement(n)
   }
   // 4) constructor and deconstructor
   class StatePutCompanionAbs extends CompanionDef[StatePutCompanionAbs] with StatePutCompanion {
@@ -206,7 +216,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStatePut[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StatePutData[S, A], StatePut[S, A]] =
-    cachedIso[StatePutIso[S, A]](eS, eA)
+    reifyObject(new StatePutIso[S, A]()(eS, eA))
 
   // 6) smart constructor and deconstructor
   def mkStatePut[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]]

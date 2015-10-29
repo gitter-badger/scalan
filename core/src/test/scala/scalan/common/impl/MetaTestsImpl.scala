@@ -84,14 +84,19 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT0Iso
-    extends Iso[MT0Data, MT0] {
+    extends Iso0[MT0Data, MT0] {
     override def from(p: Rep[MT0]) =
       p.size
     override def to(p: Rep[Int]) = {
       val size = p
       MT0(size)
     }
-    lazy val eTo = new MT0Elem(this)
+    lazy val eFrom = element[Int]
+    lazy val eTo = new MT0Elem(self)
+    lazy val selfType = new ConcreteIso0Elem[MT0Data, MT0, MT0Iso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[MT0Data, MT0]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class MT0CompanionAbs extends CompanionDef[MT0CompanionAbs] with MT0Companion {
@@ -123,7 +128,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT0: Iso[MT0Data, MT0] =
-    cachedIso[MT0Iso]()
+    reifyObject(new MT0Iso())
 
   // 6) smart constructor and deconstructor
   def mkMT0(size: Rep[Int]): Rep[MT0]
@@ -157,14 +162,19 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT1Iso[T](implicit elem: Elem[T])
-    extends Iso[MT1Data[T], MT1[T]]()(pairElement(implicitly[Elem[T]], implicitly[Elem[Int]])) {
+    extends Iso0[MT1Data[T], MT1[T]] {
     override def from(p: Rep[MT1[T]]) =
       (p.data, p.size)
     override def to(p: Rep[(T, Int)]) = {
       val Pair(data, size) = p
       MT1(data, size)
     }
-    lazy val eTo = new MT1Elem[T](this)
+    lazy val eFrom = pairElement(element[T], element[Int])
+    lazy val eTo = new MT1Elem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[MT1Data[T], MT1[T], MT1Iso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[MT1Data[T], MT1[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = elem
   }
   // 4) constructor and deconstructor
   class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
@@ -197,7 +207,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT1[T](implicit elem: Elem[T]): Iso[MT1Data[T], MT1[T]] =
-    cachedIso[MT1Iso[T]](elem)
+    reifyObject(new MT1Iso[T]()(elem))
 
   // 6) smart constructor and deconstructor
   def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
@@ -232,14 +242,19 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT2Iso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends Iso[MT2Data[T, R], MT2[T, R]]()(pairElement(implicitly[Elem[T]], pairElement(implicitly[Elem[R]], implicitly[Elem[Int]]))) {
+    extends Iso0[MT2Data[T, R], MT2[T, R]] {
     override def from(p: Rep[MT2[T, R]]) =
       (p.indices, p.values, p.size)
     override def to(p: Rep[(T, (R, Int))]) = {
       val Pair(indices, Pair(values, size)) = p
       MT2(indices, values, size)
     }
-    lazy val eTo = new MT2Elem[T, R](this)
+    lazy val eFrom = pairElement(element[T], pairElement(element[R], element[Int]))
+    lazy val eTo = new MT2Elem[T, R](self)
+    lazy val selfType = new ConcreteIso0Elem[MT2Data[T, R], MT2[T, R], MT2Iso[T, R]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[MT2Data[T, R], MT2[T, R]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eT, eR).productElement(n)
   }
   // 4) constructor and deconstructor
   class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {
@@ -272,7 +287,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT2[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[MT2Data[T, R], MT2[T, R]] =
-    cachedIso[MT2Iso[T, R]](eT, eR)
+    reifyObject(new MT2Iso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]

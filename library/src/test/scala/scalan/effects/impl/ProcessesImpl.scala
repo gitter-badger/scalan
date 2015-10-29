@@ -91,14 +91,19 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AwaitIso[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Iso[AwaitData[F, A, O], Await[F, A, O]]()(pairElement(implicitly[Elem[F[A]]], implicitly[Elem[$bar[Throwable, A] => Process[F, O]]])) {
+    extends Iso0[AwaitData[F, A, O], Await[F, A, O]] {
     override def from(p: Rep[Await[F, A, O]]) =
       (p.req, p.recv)
     override def to(p: Rep[(F[A], $bar[Throwable, A] => Process[F, O])]) = {
       val Pair(req, recv) = p
       Await(req, recv)
     }
-    lazy val eTo = new AwaitElem[F, A, O](this)
+    lazy val eFrom = pairElement(element[F[A]], element[$bar[Throwable, A] => Process[F, O]])
+    lazy val eTo = new AwaitElem[F, A, O](self)
+    lazy val selfType = new ConcreteIso0Elem[AwaitData[F, A, O], Await[F, A, O], AwaitIso[F, A, O]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[AwaitData[F, A, O], Await[F, A, O]]]]
+    def productArity = 3
+    def productElement(n: Int) = (eA, eO, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
@@ -131,7 +136,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAwait[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Iso[AwaitData[F, A, O], Await[F, A, O]] =
-    cachedIso[AwaitIso[F, A, O]](eA, eO, cF)
+    reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkAwait[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]]
@@ -165,14 +170,19 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class EmitIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[EmitData[F, O], Emit[F, O]]()(pairElement(implicitly[Elem[O]], implicitly[Elem[Process[F, O]]])) {
+    extends Iso0[EmitData[F, O], Emit[F, O]] {
     override def from(p: Rep[Emit[F, O]]) =
       (p.head, p.tail)
     override def to(p: Rep[(O, Process[F, O])]) = {
       val Pair(head, tail) = p
       Emit(head, tail)
     }
-    lazy val eTo = new EmitElem[F, O](this)
+    lazy val eFrom = pairElement(element[O], element[Process[F, O]])
+    lazy val eTo = new EmitElem[F, O](self)
+    lazy val selfType = new ConcreteIso0Elem[EmitData[F, O], Emit[F, O], EmitIso[F, O]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[EmitData[F, O], Emit[F, O]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
@@ -205,7 +215,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoEmit[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[EmitData[F, O], Emit[F, O]] =
-    cachedIso[EmitIso[F, O]](eO, cF)
+    reifyObject(new EmitIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkEmit[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]]
@@ -239,14 +249,19 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HaltIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[HaltData[F, O], Halt[F, O]] {
+    extends Iso0[HaltData[F, O], Halt[F, O]] {
     override def from(p: Rep[Halt[F, O]]) =
       p.err
     override def to(p: Rep[Throwable]) = {
       val err = p
       Halt(err)
     }
-    lazy val eTo = new HaltElem[F, O](this)
+    lazy val eFrom = element[Throwable]
+    lazy val eTo = new HaltElem[F, O](self)
+    lazy val selfType = new ConcreteIso0Elem[HaltData[F, O], Halt[F, O], HaltIso[F, O]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[HaltData[F, O], Halt[F, O]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class HaltCompanionAbs extends CompanionDef[HaltCompanionAbs] with HaltCompanion {
@@ -278,7 +293,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHalt[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[HaltData[F, O], Halt[F, O]] =
-    cachedIso[HaltIso[F, O]](eO, cF)
+    reifyObject(new HaltIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkHalt[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]]

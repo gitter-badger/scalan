@@ -88,14 +88,19 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DenseFlatMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]]()(pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]])) {
+    extends Iso0[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
       (p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
       val Pair(rmValues, numColumns) = p
       DenseFlatMatrix(rmValues, numColumns)
     }
-    lazy val eTo = new DenseFlatMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[T]], element[Int])
+    lazy val eTo = new DenseFlatMatrixElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[DenseFlatMatrixData[T], DenseFlatMatrix[T], DenseFlatMatrixIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[DenseFlatMatrixData[T], DenseFlatMatrix[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class DenseFlatMatrixCompanionAbs extends CompanionDef[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
@@ -128,7 +133,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseFlatMatrix[T](implicit eT: Elem[T]): Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] =
-    cachedIso[DenseFlatMatrixIso[T]](eT)
+    reifyObject(new DenseFlatMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
@@ -161,14 +166,19 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CompoundMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[CompoundMatrixData[T], CompoundMatrix[T]]()(pairElement(implicitly[Elem[Collection[AbstractVector[T]]]], implicitly[Elem[Int]])) {
+    extends Iso0[CompoundMatrixData[T], CompoundMatrix[T]] {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
     }
-    lazy val eTo = new CompoundMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[AbstractVector[T]]], element[Int])
+    lazy val eTo = new CompoundMatrixElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[CompoundMatrixData[T], CompoundMatrix[T], CompoundMatrixIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CompoundMatrixData[T], CompoundMatrix[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class CompoundMatrixCompanionAbs extends CompanionDef[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
@@ -201,7 +211,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCompoundMatrix[T](implicit eT: Elem[T]): Iso[CompoundMatrixData[T], CompoundMatrix[T]] =
-    cachedIso[CompoundMatrixIso[T]](eT)
+    reifyObject(new CompoundMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
@@ -235,14 +245,19 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ConstMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[ConstMatrixData[T], ConstMatrix[T]]()(pairElement(implicitly[Elem[T]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]]))) {
+    extends Iso0[ConstMatrixData[T], ConstMatrix[T]] {
     override def from(p: Rep[ConstMatrix[T]]) =
       (p.item, p.numColumns, p.numRows)
     override def to(p: Rep[(T, (Int, Int))]) = {
       val Pair(item, Pair(numColumns, numRows)) = p
       ConstMatrix(item, numColumns, numRows)
     }
-    lazy val eTo = new ConstMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[T], pairElement(element[Int], element[Int]))
+    lazy val eTo = new ConstMatrixElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[ConstMatrixData[T], ConstMatrix[T], ConstMatrixIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[ConstMatrixData[T], ConstMatrix[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class ConstMatrixCompanionAbs extends CompanionDef[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
@@ -275,7 +290,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstMatrix[T](implicit eT: Elem[T]): Iso[ConstMatrixData[T], ConstMatrix[T]] =
-    cachedIso[ConstMatrixIso[T]](eT)
+    reifyObject(new ConstMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkConstMatrix[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]]
@@ -309,14 +324,19 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DiagonalMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[DiagonalMatrixData[T], DiagonalMatrix[T]] {
+    extends Iso0[DiagonalMatrixData[T], DiagonalMatrix[T]] {
     override def from(p: Rep[DiagonalMatrix[T]]) =
       p.diagonalValues
     override def to(p: Rep[Collection[T]]) = {
       val diagonalValues = p
       DiagonalMatrix(diagonalValues)
     }
-    lazy val eTo = new DiagonalMatrixElem[T](this)
+    lazy val eFrom = element[Collection[T]]
+    lazy val eTo = new DiagonalMatrixElem[T](self)
+    lazy val selfType = new ConcreteIso0Elem[DiagonalMatrixData[T], DiagonalMatrix[T], DiagonalMatrixIso[T]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[DiagonalMatrixData[T], DiagonalMatrix[T]]]]
+    def productArity = 1
+    def productElement(n: Int) = eT
   }
   // 4) constructor and deconstructor
   class DiagonalMatrixCompanionAbs extends CompanionDef[DiagonalMatrixCompanionAbs] with DiagonalMatrixCompanion {
@@ -348,7 +368,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDiagonalMatrix[T](implicit eT: Elem[T]): Iso[DiagonalMatrixData[T], DiagonalMatrix[T]] =
-    cachedIso[DiagonalMatrixIso[T]](eT)
+    reifyObject(new DiagonalMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDiagonalMatrix[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]]

@@ -89,14 +89,19 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HashMMultiMapIso[K, V](implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
+    extends Iso0[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override def from(p: Rep[HashMMultiMap[K, V]]) =
       p.map
     override def to(p: Rep[MMap[K, ArrayBuffer[V]]]) = {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val eTo = new HashMMultiMapElem[K, V](this)
+    lazy val eFrom = element[MMap[K, ArrayBuffer[V]]]
+    lazy val eTo = new HashMMultiMapElem[K, V](self)
+    lazy val selfType = new ConcreteIso0Elem[HashMMultiMapData[K, V], HashMMultiMap[K, V], HashMMultiMapIso[K, V]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[HashMMultiMapData[K, V], HashMMultiMap[K, V]]]]
+    def productArity = 2
+    def productElement(n: Int) = (elemKey, elemValue).productElement(n)
   }
   // 4) constructor and deconstructor
   class HashMMultiMapCompanionAbs extends CompanionDef[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
@@ -128,7 +133,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHashMMultiMap[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] =
-    cachedIso[HashMMultiMapIso[K, V]](elemKey, elemValue)
+    reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
 
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]

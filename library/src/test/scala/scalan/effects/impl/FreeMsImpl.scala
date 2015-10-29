@@ -90,14 +90,19 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DoneIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[DoneData[F, A], Done[F, A]] {
+    extends Iso0[DoneData[F, A], Done[F, A]] {
     override def from(p: Rep[Done[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Done(a)
     }
-    lazy val eTo = new DoneElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new DoneElem[F, A](self)
+    lazy val selfType = new ConcreteIso0Elem[DoneData[F, A], Done[F, A], DoneIso[F, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[DoneData[F, A], Done[F, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class DoneCompanionAbs extends CompanionDef[DoneCompanionAbs] with DoneCompanion {
@@ -129,7 +134,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDone[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[DoneData[F, A], Done[F, A]] =
-    cachedIso[DoneIso[F, A]](eA, cF)
+    reifyObject(new DoneIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkDone[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]]
@@ -163,14 +168,19 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MoreIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[MoreData[F, A], More[F, A]] {
+    extends Iso0[MoreData[F, A], More[F, A]] {
     override def from(p: Rep[More[F, A]]) =
       p.k
     override def to(p: Rep[F[FreeM[F, A]]]) = {
       val k = p
       More(k)
     }
-    lazy val eTo = new MoreElem[F, A](this)
+    lazy val eFrom = element[F[FreeM[F, A]]]
+    lazy val eTo = new MoreElem[F, A](self)
+    lazy val selfType = new ConcreteIso0Elem[MoreData[F, A], More[F, A], MoreIso[F, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[MoreData[F, A], More[F, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class MoreCompanionAbs extends CompanionDef[MoreCompanionAbs] with MoreCompanion {
@@ -202,7 +212,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMore[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[MoreData[F, A], More[F, A]] =
-    cachedIso[MoreIso[F, A]](eA, cF)
+    reifyObject(new MoreIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkMore[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]]
@@ -237,14 +247,19 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class FlatMapIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[FlatMapData[F, S, B], FlatMap[F, S, B]]()(pairElement(implicitly[Elem[FreeM[F, S]]], implicitly[Elem[S => FreeM[F, B]]])) {
+    extends Iso0[FlatMapData[F, S, B], FlatMap[F, S, B]] {
     override def from(p: Rep[FlatMap[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(FreeM[F, S], S => FreeM[F, B])]) = {
       val Pair(a, f) = p
       FlatMap(a, f)
     }
-    lazy val eTo = new FlatMapElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[FreeM[F, S]], element[S => FreeM[F, B]])
+    lazy val eTo = new FlatMapElem[F, S, B](self)
+    lazy val selfType = new ConcreteIso0Elem[FlatMapData[F, S, B], FlatMap[F, S, B], FlatMapIso[F, S, B]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[FlatMapData[F, S, B], FlatMap[F, S, B]]]]
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
   }
   // 4) constructor and deconstructor
   class FlatMapCompanionAbs extends CompanionDef[FlatMapCompanionAbs] with FlatMapCompanion {
@@ -277,7 +292,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoFlatMap[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[FlatMapData[F, S, B], FlatMap[F, S, B]] =
-    cachedIso[FlatMapIso[F, S, B]](eS, eA, cF)
+    reifyObject(new FlatMapIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkFlatMap[F[_], S, B](a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]]

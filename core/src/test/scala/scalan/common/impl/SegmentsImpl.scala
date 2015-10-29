@@ -84,14 +84,19 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IntervalIso
-    extends Iso[IntervalData, Interval]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends Iso0[IntervalData, Interval] {
     override def from(p: Rep[Interval]) =
       (p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, end) = p
       Interval(start, end)
     }
-    lazy val eTo = new IntervalElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new IntervalElem(self)
+    lazy val selfType = new ConcreteIso0Elem[IntervalData, Interval, IntervalIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[IntervalData, Interval]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
@@ -124,7 +129,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoInterval: Iso[IntervalData, Interval] =
-    cachedIso[IntervalIso]()
+    reifyObject(new IntervalIso())
 
   // 6) smart constructor and deconstructor
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
@@ -156,14 +161,19 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SliceIso
-    extends Iso[SliceData, Slice]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends Iso0[SliceData, Slice] {
     override def from(p: Rep[Slice]) =
       (p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, length) = p
       Slice(start, length)
     }
-    lazy val eTo = new SliceElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new SliceElem(self)
+    lazy val selfType = new ConcreteIso0Elem[SliceData, Slice, SliceIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SliceData, Slice]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
@@ -196,7 +206,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSlice: Iso[SliceData, Slice] =
-    cachedIso[SliceIso]()
+    reifyObject(new SliceIso())
 
   // 6) smart constructor and deconstructor
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
@@ -229,14 +239,19 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CenteredIso
-    extends Iso[CenteredData, Centered]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends Iso0[CenteredData, Centered] {
     override def from(p: Rep[Centered]) =
       (p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(center, radius) = p
       Centered(center, radius)
     }
-    lazy val eTo = new CenteredElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new CenteredElem(self)
+    lazy val selfType = new ConcreteIso0Elem[CenteredData, Centered, CenteredIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[CenteredData, Centered]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {
@@ -269,7 +284,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCentered: Iso[CenteredData, Centered] =
-    cachedIso[CenteredIso]()
+    reifyObject(new CenteredIso())
 
   // 6) smart constructor and deconstructor
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]

@@ -91,14 +91,19 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[SVertexData[V, E], SVertex[V, E]]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]])) {
+    extends Iso0[SVertexData[V, E], SVertex[V, E]] {
     override def from(p: Rep[SVertex[V, E]]) =
       (p.id, p.graph)
     override def to(p: Rep[(Int, Graph[V, E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
-    lazy val eTo = new SVertexElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], element[Graph[V, E]])
+    lazy val eTo = new SVertexElem[V, E](self)
+    lazy val selfType = new ConcreteIso0Elem[SVertexData[V, E], SVertex[V, E], SVertexIso[V, E]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SVertexData[V, E], SVertex[V, E]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
   }
   // 4) constructor and deconstructor
   class SVertexCompanionAbs extends CompanionDef[SVertexCompanionAbs] with SVertexCompanion {
@@ -131,7 +136,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSVertex[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[SVertexData[V, E], SVertex[V, E]] =
-    cachedIso[SVertexIso[V, E]](eV, eE)
+    reifyObject(new SVertexIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]

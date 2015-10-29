@@ -24,13 +24,13 @@ trait Thunks { self: Scalan =>
     def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
   }
 
-  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
-    def from(x: Th[B]) = x.map(iso.fromFun)
-    def to(x: Th[A]) = x.map(iso.toFun)
-    lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
-  }
-
-  def thunkIso[A,B](iso: Iso[A, B]) = cachedIso[ThunkIso[A, B]](iso)
+//  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso10[A, B, Thunk](iso)(iso.eFrom, iso.eTo, container[Thunk]) {
+//    def from(x: Th[B]) = x.map(iso.fromFun)
+//    def to(x: Th[A]) = x.map(iso.toFun)
+//    lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
+//  }
+//
+//  def thunkIso[A,B](iso: Iso[A, B]) = reifyObject(ThunkIso[A, B](iso)).asInstanceOf[Iso1[A, B, Thunk]]
 
   case class ThunkElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
@@ -106,17 +106,18 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
     case _ => super.transformDef(d, t)
   }
 
-  case class ThunkView[A, B](source: Rep[Thunk[A]])(iso: Iso1[A, B, Thunk])
-    extends View1[A, B, Thunk](iso) {
-    //lazy val iso = thunkIso(i)
-  }
-
-  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
-    case Def(view: ThunkView[_,_]) =>
-      Some((view.source, view.iso))
-    case _ =>
-      super.unapplyViews(s)
-  }).asInstanceOf[Option[Unpacked[T]]]
+  // TODO uncomment
+//  case class ThunkView[A, B](source: Rep[Thunk[A]])(iso: Iso1[A, B, Thunk])
+//    extends View1[A, B, Thunk](iso) {
+//    //lazy val iso = thunkIso(i)
+//  }
+//
+//  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+//    case Def(view: ThunkView[_,_]) =>
+//      Some((view.source, view.iso))
+//    case _ =>
+//      super.unapplyViews(s)
+//  }).asInstanceOf[Option[Unpacked[T]]]
 
   class ThunkScope(val thunkSym: Exp[Any], val body: ListBuffer[TableEntry[Any]] = ListBuffer.empty) {
     def +=(te: TableEntry[_]) =
@@ -207,19 +208,20 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
       super.matchDefs(d1, d2, allowInexactMatch, subst)
   }
 
-  override def rewriteDef[T](d: Def[T]) = d match {
-    case th @ ThunkDef(HasViews(srcRes, iso: Iso[a,b]), _) => {
-      implicit val eA = iso.eFrom
-      implicit val eB = iso.eTo
-      val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
-      ThunkView(newTh)(thunkIso(iso))
-    }
-    case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
-      implicit val eA = iso.iso.eFrom
-      iso.iso.to(srcTh.asRep[Thunk[a]].force)
-    }
-    case _ => super.rewriteDef(d)
-  }
+  // TODO uncomment
+//  override def rewriteDef[T](d: Def[T]) = d match {
+//    case th @ ThunkDef(HasViews(srcRes, iso: Iso[a,b]), _) => {
+//      implicit val eA = iso.eFrom
+//      implicit val eB = iso.eTo
+//      val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
+//      ThunkView(newTh)(thunkIso(iso))
+//    }
+//    case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
+//      implicit val eA = iso.iso.eFrom
+//      iso.iso.to(srcTh.asRep[Thunk[a]].force)
+//    }
+//    case _ => super.rewriteDef(d)
+//  }
 
   override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case ThunkDef(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"

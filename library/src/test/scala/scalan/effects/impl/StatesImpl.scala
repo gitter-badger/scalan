@@ -90,14 +90,19 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 3) Iso for concrete class
   class StateBaseIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends Iso[StateBaseData[S, A], StateBase[S, A]] {
+    extends Iso0[StateBaseData[S, A], StateBase[S, A]] {
     override def from(p: Rep[StateBase[S, A]]) =
       p.run
     override def to(p: Rep[S => (A, S)]) = {
       val run = p
       StateBase(run)
     }
-    lazy val eTo = new StateBaseElem[S, A](this)
+    lazy val eFrom = element[S => (A, S)]
+    lazy val eTo = new StateBaseElem[S, A](self)
+    lazy val selfType = new ConcreteIso0Elem[StateBaseData[S, A], StateBase[S, A], StateBaseIso[S, A]](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[StateBaseData[S, A], StateBase[S, A]]]]
+    def productArity = 2
+    def productElement(n: Int) = (eS, eA).productElement(n)
   }
   // 4) constructor and deconstructor
   class StateBaseCompanionAbs extends CompanionDef[StateBaseCompanionAbs] with StateBaseCompanion {
@@ -129,7 +134,7 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateBase[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateBaseData[S, A], StateBase[S, A]] =
-    cachedIso[StateBaseIso[S, A]](eS, eA)
+    reifyObject(new StateBaseIso[S, A]()(eS, eA))
 
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]

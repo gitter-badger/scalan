@@ -109,14 +109,19 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SThrowableImplIso
-    extends Iso[SThrowableImplData, SThrowableImpl] {
+    extends Iso0[SThrowableImplData, SThrowableImpl] {
     override def from(p: Rep[SThrowableImpl]) =
       p.wrappedValue
     override def to(p: Rep[Throwable]) = {
       val wrappedValue = p
       SThrowableImpl(wrappedValue)
     }
-    lazy val eTo = new SThrowableImplElem(this)
+    lazy val eFrom = element[Throwable]
+    lazy val eTo = new SThrowableImplElem(self)
+    lazy val selfType = new ConcreteIso0Elem[SThrowableImplData, SThrowableImpl, SThrowableImplIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[SThrowableImplData, SThrowableImpl]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class SThrowableImplCompanionAbs extends CompanionDef[SThrowableImplCompanionAbs] {
@@ -148,7 +153,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSThrowableImpl: Iso[SThrowableImplData, SThrowableImpl] =
-    cachedIso[SThrowableImplIso]()
+    reifyObject(new SThrowableImplIso())
 
   // 6) smart constructor and deconstructor
   def mkSThrowableImpl(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl]

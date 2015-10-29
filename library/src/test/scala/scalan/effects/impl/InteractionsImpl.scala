@@ -89,14 +89,19 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AskIso
-    extends Iso[AskData, Ask] {
+    extends Iso0[AskData, Ask] {
     override def from(p: Rep[Ask]) =
       p.prompt
     override def to(p: Rep[String]) = {
       val prompt = p
       Ask(prompt)
     }
-    lazy val eTo = new AskElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new AskElem(self)
+    lazy val selfType = new ConcreteIso0Elem[AskData, Ask, AskIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[AskData, Ask]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class AskCompanionAbs extends CompanionDef[AskCompanionAbs] with AskCompanion {
@@ -128,7 +133,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAsk: Iso[AskData, Ask] =
-    cachedIso[AskIso]()
+    reifyObject(new AskIso())
 
   // 6) smart constructor and deconstructor
   def mkAsk(prompt: Rep[String]): Rep[Ask]
@@ -161,14 +166,19 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class TellIso
-    extends Iso[TellData, Tell] {
+    extends Iso0[TellData, Tell] {
     override def from(p: Rep[Tell]) =
       p.msg
     override def to(p: Rep[String]) = {
       val msg = p
       Tell(msg)
     }
-    lazy val eTo = new TellElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new TellElem(self)
+    lazy val selfType = new ConcreteIso0Elem[TellData, Tell, TellIso](eFrom, eTo).
+      asInstanceOf[Elem[Iso0[TellData, Tell]]]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
   // 4) constructor and deconstructor
   class TellCompanionAbs extends CompanionDef[TellCompanionAbs] with TellCompanion {
@@ -200,7 +210,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoTell: Iso[TellData, Tell] =
-    cachedIso[TellIso]()
+    reifyObject(new TellIso())
 
   // 6) smart constructor and deconstructor
   def mkTell(msg: Rep[String]): Rep[Tell]
